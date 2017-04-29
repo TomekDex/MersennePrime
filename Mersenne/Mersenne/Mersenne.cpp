@@ -20,13 +20,13 @@ using namespace std;
 bool save = false;
 mutex mI;
 uint32_t index = 1;
-uint32_t arPrime[MAX_PRIME / 32 / 2];
+uint32_t arprime[MAX_PRIME / 32 / 2];
 uint32_t z[64];
 uint32_t y[MAX_TASK][MAX_S][32];
 uint32_t prime[MAX_PRIME / 32 / 2];
 uint32_t sum = 1;
-inline void clrpixel(uint64_t i) { arPrime[i >> 6] &= ~(z[i & 0x3F]); }
-inline uint32_t getpixel(uint32_t i) { return (arPrime[i >> 6] & z[i & 0x3F]); }
+inline void clrpixel(uint64_t i) { arprime[i >> 6] &= ~(z[i & 0x3F]); }
+inline uint32_t getpixel(uint32_t i) { return (arprime[i >> 6] & z[i & 0x3F]); }
 inline uint32_t  getpixelprime(uint32_t i) { return (prime[i >> 6] & z[i & 0x3F]); }
 inline void clrpixelprime(uint64_t i) { prime[i >> 6] &= ~(z[i & 0x3F]); }
 
@@ -38,9 +38,9 @@ inline void fillz() {
 	}
 }
 
-inline void copyPrime() {
+inline void copyprime() {
 	for (int i = 0; i < MAX_PRIME / 32 / 2; i++) {
-		prime[i] = arPrime[i];
+		prime[i] = arprime[i];
 	}
 }
 void fill()
@@ -48,7 +48,7 @@ void fill()
 	fillz();
 	uint64_t i, j;
 	for (i = 0; i < MAX_PRIME / 32 / 2; i++)
-		arPrime[i] = ~0;
+		arprime[i] = ~0;
 	cout << "filled table" << endl;
 
 	for (i = 3; i < SQRT_MAX_PRIME; i += 2)
@@ -58,10 +58,10 @@ void fill()
 			clrpixel(j);
 	}
 	cout << "clear all not first" << endl;
-	copyPrime();
+	copyprime();
 }
 
-inline void fillPowerModulo(uint8_t task, uint8_t id, uint32_t no)
+inline void fillpowermodulo(uint8_t task, uint8_t id, uint32_t no)
 {
 	uint64_t body = 1;
 	y[task][id][0] = 2 % no;
@@ -70,21 +70,21 @@ inline void fillPowerModulo(uint8_t task, uint8_t id, uint32_t no)
 		y[task][id][i] = (y[task][id][i - 1] * y[task][id][i - 1]) % no;
 	}
 }
-inline void PowerModulo(uint32_t no, uint32_t sPrime, uint8_t task, uint8_t id)
+inline void powermodulo(uint32_t no, uint32_t sprime, uint8_t task, uint8_t id)
 {
 	uint32_t prime_2 = no;
 	uint64_t mod = 1;
 	for (uint32_t z = 0; prime_2 != 0; z++) {
-		if (prime_2 & 1) { mod = (mod*(uint64_t)y[task][id][z]) % sPrime; }
+		if (prime_2 & 1) { mod = (mod*(uint64_t)y[task][id][z]) % sprime; }
 		prime_2 = prime_2 >> 1;
 	}
 	if (mod == 1) {
 		clrpixelprime(no);
-		printf("\n delete 2^%u-1/%u \n", no, sPrime);
+		printf("\n delete 2^%u-1/%u \n", no, sprime);
 		mI.lock();
 		ofstream file("PrimeRaport.txt", ios::app);
 		if (file.good()) {
-			file << no << " % " << sPrime << endl;
+			file << no << " % " << sprime << endl;
 			file.close();
 		}
 		mI.unlock();
@@ -93,7 +93,7 @@ inline void PowerModulo(uint32_t no, uint32_t sPrime, uint8_t task, uint8_t id)
 }
 
 
-inline void Negative(uint8_t task) {
+inline void negative(uint8_t task) {
 
 	uint32_t j = 0;
 	uint32_t t[MAX_S];
@@ -107,14 +107,14 @@ inline void Negative(uint8_t task) {
 			if (getpixel(index)) {
 				clrpixel(index);
 				t[j] = index;
-				fillPowerModulo(task, j, index);
+				fillpowermodulo(task, j, index);
 				j++;
 				mI.unlock();
 				if (j == MAX_S) {
 					printf("%u ", t[MAX_S - 1]);
 					j = 0;
 					for (uint32_t i = 3; i < MAX_PRIME - 1; i += 2) {
-						if (getpixelprime(i)) for (uint8_t l = 0; l < MAX_S; l++) PowerModulo(i, t[l], task, l);
+						if (getpixelprime(i)) for (uint8_t l = 0; l < MAX_S; l++) powermodulo(i, t[l], task, l);
 					}
 				}
 			}
@@ -123,7 +123,7 @@ inline void Negative(uint8_t task) {
 		else mI.unlock();
 	}
 }
-inline void Read() {
+inline void read() {
 	cout << "read";
 	ifstream file("prime", ios::binary);
 	ifstream file2("arPrime", ios::binary);
@@ -131,7 +131,7 @@ inline void Read() {
 		cout << " is progres";
 		for (uint32_t i = 0; i < MAX_PRIME / 32 / 2; i++) {
 			file.read((char*)&prime[i], 4);
-			file2.read((char*)&arPrime[i], 4);
+			file2.read((char*)&arprime[i], 4);
 		}
 		file.close();
 		file2.close();
@@ -140,7 +140,7 @@ inline void Read() {
 	else  cout << " fail";
 	cout << endl;
 }
-inline void Write() {
+inline void write() {
 	cout << "write";
 	uint32_t in = index;
 	ofstream file("prime", ios::binary | ios::trunc);
@@ -151,9 +151,9 @@ inline void Write() {
 		cout << " is progres";
 		for (uint32_t i = 0; i < MAX_PRIME / 32 / 2; i++) {
 			file.write((const char*)&prime[i], 4);
-			file2.write((const char*)&arPrime[i], 4);
+			file2.write((const char*)&arprime[i], 4);
 			file3.write((const char*)&prime[i], 4);
-			file4.write((const char*)&arPrime[i], 4);
+			file4.write((const char*)&arprime[i], 4);
 		}
 		file.close();
 		file2.close();
@@ -170,22 +170,22 @@ int main()
 {
 
 	fill();
-	Read();
+	read();
 	thread th[MAX_TASK];
 	while (index < MAX_PRIME - 1) {
-		for (uint8_t i = 0; i < MAX_TASK; i++) if (!th[i].joinable())th[i] = thread(Negative, i);
+		for (uint8_t i = 0; i < MAX_TASK; i++) if (!th[i].joinable())th[i] = thread(negative, i);
 		if (sum > 10000000) {
 			save = true;
 			sum = 0;
 			for (uint8_t i = 0; i < MAX_TASK; i++) if (th[i].joinable())th[i].join();
-			Write();
+			write();
 			save = false;
 		}
 		if (GetAsyncKeyState(0x53)) {
 			cout << "Press s. Soon save procedure will start";
 			save = true;
 			for (uint8_t i = 0; i < MAX_TASK; i++) if (th[i].joinable())th[i].join();
-			Write();
+			write();
 			save = false;
 		}
 		this_thread::yield();
@@ -193,7 +193,7 @@ int main()
 
 
 	for (uint8_t i = 0; i < MAX_TASK; i++) if (th[i].joinable()) th[i].join();
-	Write();
+	write();
 	int end;
 	cout << " end ";
 	cin >> end;
